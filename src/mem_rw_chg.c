@@ -1,18 +1,14 @@
 #ifdef __aarch64__
 
+// 代码参考：
+//  https://stackoverflow.com/questions/61247838/cannot-use-set-memory-rw-in-linux-kernel-on-arm64
+
 #include "mem_rw_chg.h"
 
-#include <linux/init.h>     // module_{init,exit}()
-#include <linux/module.h>   // THIS_MODULE, MODULE_VERSION, ...
-#include <linux/kernel.h>   // printk(), pr_*()
-#include <linux/kallsyms.h> // kallsyms_lookup_name()
-#include <asm/syscall.h>    // syscall_fn_t, __NR_*
-#include <asm/ptrace.h>     // struct pt_regs
 #include <asm/tlbflush.h>   // flush_tlb_kernel_range()
 #include <asm/pgtable.h>    // {clear,set}_pte_bit(), set_pte()
 #include <linux/vmalloc.h>  // vm_unmap_aliases()
 #include <linux/mm.h>       // struct mm_struct, apply_to_page_range()
-#include <linux/kconfig.h>  // IS_ENABLED()
 
 /**
  * @brief init_mm的地址，初始的时候去设置
@@ -75,6 +71,5 @@ int set_page_ro(unsigned long addr)
     vm_unmap_aliases();
     return __change_memory_common(addr, PAGE_SIZE, __pgprot(PTE_RDONLY), __pgprot(PTE_WRITE));
 }
-
 
 #endif
