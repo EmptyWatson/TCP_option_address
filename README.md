@@ -2,6 +2,15 @@
 
 The TCP Option Address (TOA) module is a kernel module that obtains the source IPv4 address from the option section of a TCP header.
 
+此分支用于适配kylin v10 aarch64系统。
+
+原因是官方版本在kylin v10 aarch64上编译失败(centos 7.x aarch64上同样编译失败)。
+
+对应的bug
+[TOA arm64 编译报错 #9](https://github.com/Huawei/TCP_option_address/issues/9)
+
+更换了去除写保护的方法。
+
 ## How to use the TOA module?
 
 ### Requirement
