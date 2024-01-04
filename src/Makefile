@@ -2,7 +2,9 @@
 # Makefile for the IPVS TOA  modules on top of IPv4.
 #
 
-obj-$(CONFIG_TOA) += toa.o
+obj-$(CONFIG_TOA) += toa_arm.o
+
+toa_arm-objs := toa.o mem_rw_chg.o
 
 default:
 	make CONFIG_TOA=m  -C /lib/modules/`uname -r`/build M=`pwd` modules

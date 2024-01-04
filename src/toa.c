@@ -1,4 +1,6 @@
 #include "toa.h"
+//#include <linux/set_memory.h>
+#include "mem_rw_chg.h"
 
 /*
  *	TOA: Address is a new TCP Option
@@ -295,8 +297,12 @@ tcp_v6_syn_recv_sock_toa(struct sock *sk, struct sk_buff *skb,
 static inline int
 hook_toa_functions(void)
 {
+#ifdef __aarch64__
+	int ret = 0;
+#else	
 	unsigned int level;
 	pte_t *pte;
+#endif
 
 	/* hook inet_getname for ipv4 */
 	struct proto_ops *inet_stream_ops_p =
@@ -313,12 +319,20 @@ hook_toa_functions(void)
 			(struct inet_connection_sock_af_ops *)&ipv6_specific;
 #endif
 
+#ifdef __aarch64__
+	ret = set_page_rw((unsigned long )inet_stream_ops_p);
+	if(ret)
+	{
+		TOA_INFO("set_page_rw inet_stream_ops_p failed\n");
+	}
+#else
 	pte = lookup_address((unsigned long )inet_stream_ops_p, &level);
 	if (pte == NULL)
 		return 1;
 	if (pte->pte & ~_PAGE_RW) {
 		pte->pte |= _PAGE_RW;
 	}
+#endif
 
 	inet_stream_ops_p->getname = inet_getname_toa;
 	TOA_INFO("CPU [%u] hooked inet_getname <%p> --> <%p>\n",
@@ -342,11 +356,18 @@ hook_toa_functions(void)
 		ipv6_specific_p->syn_recv_sock);
 #endif
 
+#ifdef __aarch64__
+	ret = set_page_ro((unsigned long )inet_stream_ops_p);
+	if(ret)
+	{
+		TOA_INFO("set_page_ro inet_stream_ops_p failed\n");
+	}
+#else
 	pte = lookup_address((unsigned long )inet_stream_ops_p, &level);
 	if (pte == NULL)
 		return 1;
 	pte->pte |= pte->pte &~_PAGE_RW;
-
+#endif
 	return 0;
 }
 
@@ -354,8 +375,12 @@ hook_toa_functions(void)
 static int
 unhook_toa_functions(void)
 {
+#ifdef __aarch64__
+	int ret = 0;
+#else	
 	unsigned int level;
 	pte_t *pte;
+#endif
 
 	/* unhook inet_getname for ipv4 */
 	struct proto_ops *inet_stream_ops_p =
@@ -373,12 +398,20 @@ unhook_toa_functions(void)
 			(struct inet_connection_sock_af_ops *)&ipv6_specific;
 #endif
 
+#ifdef __aarch64__
+	ret = set_page_rw((unsigned long )inet_stream_ops_p);
+	if(ret)
+	{
+		TOA_INFO("set_page_rw inet_stream_ops_p failed\n");
+	}
+#else
 	pte = lookup_address((unsigned long )inet_stream_ops_p, &level);
 	if (pte == NULL)
 		return 1;
 	if (pte->pte & ~_PAGE_RW) {
 		pte->pte |= _PAGE_RW;
 	}
+#endif
 
 	inet_stream_ops_p->getname = inet_getname;
 	TOA_INFO("CPU [%u] unhooked inet_getname\n",
@@ -400,11 +433,18 @@ unhook_toa_functions(void)
 		smp_processor_id());
 #endif
 
+#ifdef __aarch64__
+	ret = set_page_ro((unsigned long )inet_stream_ops_p);
+	if(ret)
+	{
+		TOA_INFO("set_page_ro inet_stream_ops_p failed\n");
+	}
+#else
 	pte = lookup_address((unsigned long )inet_stream_ops_p, &level);
 	if (pte == NULL)
 		return 1;
 	pte->pte |= pte->pte &~_PAGE_RW;
-
+#endif
 	return 0;
 }
 
@@ -453,6 +493,21 @@ static const struct file_operations toa_stats_fops = {
 	.release = single_release,
 };
 
+#ifdef __aarch64__
+static int init_mem_rw(void)
+{
+	struct mm_struct * init_mm_ptr = (struct mm_struct *)kallsyms_lookup_name("init_mm");
+	if(!init_mm_ptr)
+	{
+		TOA_INFO("lookup init_mm failed.\n");
+		return 1;
+	}
+	set_init_mm_ptr(init_mm_ptr);
+
+	return 0;
+}
+#endif
+
 /*
  * TOA module init and destory
  */
@@ -461,6 +516,14 @@ static const struct file_operations toa_stats_fops = {
 static int __init
 toa_init(void)
 {
+#ifdef __aarch64__
+	if(init_mem_rw())
+	{
+		TOA_INFO("init mem read write failed.\n");
+		return 1;
+	}
+#endif
+
 	/* alloc statistics array for toa */
 	ext_stats = alloc_percpu(struct toa_stat_mib);
 	if (NULL == ext_stats)
