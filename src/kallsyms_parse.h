@@ -1,5 +1,6 @@
 #ifndef __KALLSYMS_PARSE_H__
 #define __KALLSYMS_PARSE_H__
+#include <linux/types.h>
 
 /**
  * @brief Get the kallsyms path object
@@ -15,8 +16,8 @@ int get_kallsyms_path(char *file_path, int size);
  *
  * @param symbol_name 符号名字
  * @param file_path 文件路径
- * @return unsigned long ：找到的地址，0-未找到
+ * @return uint64_t ：找到的地址，0-未找到
  */
-unsigned long kallsyms_lookup_name_from_file(const char *symbol_name, const char* file_path);
+uint64_t kallsyms_lookup_name_from_file(const char *symbol_name, const char* file_path);
 
 #endif //__KALLSYMS_PARSE_H__

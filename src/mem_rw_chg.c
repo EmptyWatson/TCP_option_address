@@ -22,7 +22,7 @@ inline void set_init_mm_ptr(void* ptr)
     init_mm_ptr = (struct mm_struct *)ptr;
 }
 
-inline void* get_init_mm_ptr(){
+inline void* get_init_mm_ptr(void){
     return (void*)init_mm_ptr;
 }
 

@@ -27,10 +27,12 @@ int get_kallsyms_path(char *file_path, int size)
     return 0;
 }
 
-unsigned long parse_one_line(char *line, int line_size, const char *symbol_name)
+uint64_t parse_one_line(char *line, int line_size, const char *symbol_name)
 {
     char line_buf[PARSE_BUFFER_SIZE] = {0};
-    unsigned long addr = 0;
+    uint64_t addr = 0;
+    char type;
+    char name[256] = {0};
 
     if (line_size > (PARSE_BUFFER_SIZE - 1))
     {
@@ -39,12 +41,17 @@ unsigned long parse_one_line(char *line, int line_size, const char *symbol_name)
     }
     memcpy(line_buf, line, line_size);
     line_buf[line_size] = '\0';
+
+    if (sscanf(line_buf, "%llx %c %s", &addr, &type, name) != 3) {
+        return 0;
+    }
     //pr_info("Line: %.*s", (int)strnlen(line_buf, line_size), line_buf);
-    if (NULL == strstr(line_buf, symbol_name))
+    if (0 != strncmp(name, symbol_name, sizeof(name)))
     {
         return 0;
     }
-    sscanf(line, "%lx", &addr);
+    pr_info("getted Line: %.*s", (int)strnlen(line_buf, line_size), line_buf);
+    pr_info("getted Info: addr %llx, type %c, name %s ", addr, type, name);
     return addr;
 }
 
@@ -68,12 +75,12 @@ static int read_file(struct file *filp, char *buf, size_t count, loff_t *f_pos)
  *
  * @param buffer 数据缓存
  * @param length [in/out] 返回还剩余的长度
- * @param symbol_name
- * @return unsigned long
+ * @param symbol_name 符号名
+ * @return uint64_t 解析得到的地址
  */
-static unsigned long process_lines(char *buffer, int *length, const char *symbol_name)
+static uint64_t process_lines(char *buffer, int *length, const char *symbol_name)
 {
-    unsigned long address = 0;
+    uint64_t address = 0;
     char *line = buffer;
     while (*length > 0)
     {
@@ -98,9 +105,9 @@ static unsigned long process_lines(char *buffer, int *length, const char *symbol
     return 0;
 }
 
-unsigned long kallsyms_lookup_name_from_file(const char *symbol_name, const char* file_path)
+uint64_t kallsyms_lookup_name_from_file(const char *symbol_name, const char* file_path)
 {
-    unsigned long address = 0;
+    uint64_t address = 0;
     struct file *file = NULL;
     char buffer[PARSE_BUFFER_SIZE];
     int bytes_read = 0;

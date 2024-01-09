@@ -498,7 +498,7 @@ static const struct file_operations toa_stats_fops = {
 static int init_mem_rw(void)
 {
 	char file_path[128] = {0};
-	struct mm_struct * init_mm_ptr = (struct mm_struct *)kallsyms_lookup_name("init_mm");
+	void* init_mm_ptr = (void*)kallsyms_lookup_name("init_mm");
 	if(!init_mm_ptr)
 	{
 		if (0 != get_kallsyms_path(file_path, sizeof(file_path)))
@@ -507,12 +507,12 @@ static int init_mem_rw(void)
 			return 1;
 		}
 		TOA_INFO("lookup init_mm failed, try get from %s file.\n", file_path);
-		init_mm_ptr = (struct mm_struct *)kallsyms_lookup_name_from_file("init_mm", file_path);
+		init_mm_ptr = (void*)kallsyms_lookup_name_from_file("init_mm", file_path);
 		if(!init_mm_ptr){
 			TOA_INFO("lookup init_mm from file failed too.\n");
 			return 1;
 		}
-		TOA_INFO("kallsyms_lookup_name_from_file getted init_mm addr 0x%p.\n", init_mm_ptr);
+		TOA_INFO("kallsyms_lookup_name_from_file getted init_mm addr 0x%llx.\n", (uint64_t)init_mm_ptr);
 	}
 	set_init_mm_ptr(init_mm_ptr);
 	return 0;

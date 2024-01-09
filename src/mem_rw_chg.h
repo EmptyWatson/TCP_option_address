@@ -6,7 +6,7 @@
 
 void set_init_mm_ptr(void* ptr);
 
-void* get_init_mm_ptr();
+void* get_init_mm_ptr(void);
 
 int set_page_rw(unsigned long addr);
 
