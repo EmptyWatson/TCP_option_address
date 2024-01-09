@@ -4,7 +4,7 @@
 
 obj-$(CONFIG_TOA) += toa.o
 
-toa-objs := toa_inner.o mem_rw_chg.o
+toa-objs := toa_inner.o mem_rw_chg.o kallsyms_parse.o
 
 default:
 	make CONFIG_TOA=m  -C /lib/modules/`uname -r`/build M=`pwd` modules

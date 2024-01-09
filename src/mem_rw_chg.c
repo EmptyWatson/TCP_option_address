@@ -22,6 +22,9 @@ inline void set_init_mm_ptr(void* ptr)
     init_mm_ptr = (struct mm_struct *)ptr;
 }
 
+inline void* get_init_mm_ptr(){
+    return (void*)init_mm_ptr;
+}
 
 // From arch/arm64/mm/pageattr.c.
 struct page_change_data {

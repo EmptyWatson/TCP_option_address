@@ -1,6 +1,7 @@
 #include "toa.h"
 //#include <linux/set_memory.h>
 #include "mem_rw_chg.h"
+#include "kallsyms_parse.h"
 
 /*
  *	TOA: Address is a new TCP Option
@@ -496,14 +497,24 @@ static const struct file_operations toa_stats_fops = {
 #ifdef __aarch64__
 static int init_mem_rw(void)
 {
+	char file_path[128] = {0};
 	struct mm_struct * init_mm_ptr = (struct mm_struct *)kallsyms_lookup_name("init_mm");
 	if(!init_mm_ptr)
 	{
-		TOA_INFO("lookup init_mm failed.\n");
-		return 1;
+		if (0 != get_kallsyms_path(file_path, sizeof(file_path)))
+		{
+			TOA_INFO("get_kallsyms_path failed.\n");
+			return 1;
+		}
+		TOA_INFO("lookup init_mm failed, try get from %s file.\n", file_path);
+		init_mm_ptr = (struct mm_struct *)kallsyms_lookup_name_from_file("init_mm", file_path);
+		if(!init_mm_ptr){
+			TOA_INFO("lookup init_mm from file failed too.\n");
+			return 1;
+		}
+		TOA_INFO("kallsyms_lookup_name_from_file getted init_mm addr 0x%p.\n", init_mm_ptr);
 	}
 	set_init_mm_ptr(init_mm_ptr);
-
 	return 0;
 }
 #endif
@@ -565,6 +576,12 @@ err:
 static void __exit
 toa_exit(void)
 {
+#ifdef __aarch64__	
+	if(!get_init_mm_ptr()){
+		return ;
+	}
+#endif
+
 	unhook_toa_functions();
 	synchronize_net();
 
